@@ -1,0 +1,13 @@
+tqdm
+requests
+dashscope
+pandas
+tree_sitter
+beautifulsoup4
+GitPython
+jsonlines
+semgrep
+flawfinder
+transformers
+hugginface-hub
+openai
