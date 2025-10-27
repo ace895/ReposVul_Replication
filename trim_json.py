@@ -56,17 +56,8 @@ def trim_jsonl_files(jsonl_files, limit=50):
 
 if __name__ == "__main__":
     jsonl_files = [
-        "Vulnerability_Untangling_Module//static//new_output//semgrep_3//merge_C_new.jsonl",
-        "Vulnerability_Untangling_Module//static//new_output//llm//merge_C.jsonl",
-        "Vulnerability_Untangling_Module//static//new_output//flawfinder_1//merge_C_new.jsonl",
-        "Vulnerability_Untangling_Module//static//new_output//cppcheck_4//merge_C_new.jsonl",
-        "Raw_Data_Crawling//github//results//2016_8.jsonl",
-        "Raw_Data_Crawling//github//rawcode_result//2016_8_rawcode.jsonl",
-        "Raw_Data_Crawling//github//merge_result_new//time//merge_2016_8.jsonl",
-        "Raw_Data_Crawling//github//merge_result_new//language//merge_C.jsonl",
-        "Raw_Data_Crawling//github//crawl_result_new//2016_8_patch.jsonl",
-        "Multi-granularity_Dependency_Extraction_Module//prepared_input//output_c.jsonl",
-        "Multi-granularity_Dependency_Extraction_Module//output//output_c.jsonl"
+        "Multi-granularity_Dependency_Extraction_Module//output//output_c_final.jsonl",
+        "Multi-granularity_Dependency_Extraction_Module//output//m_output.jsonl"
     ]
 
     trim_jsonl_files(jsonl_files, limit=50)

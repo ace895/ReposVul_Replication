@@ -33,14 +33,57 @@ rawcode_root = project_root / "Raw_Data_Crawling" / "github" / "rawcode_result"
 os.makedirs(repos_before_dir, exist_ok=True)
 
 #Merge module 2 outputs
+import os
+import json
+
 merged_entries = []
+
 for file_path in module2_files:
     if not os.path.exists(file_path):
         continue
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = [line.strip() for line in f if line.strip()]
-        merged_entries.extend(lines)
 
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            #Fix details
+            if "details" in data and isinstance(data["details"], list):
+                for detail in data["details"]:
+                    if not isinstance(detail, dict):
+                        continue
+
+                    #Fix name
+                    if "llm_check_new1" in detail:
+                        llm_value = detail.pop("llm_check_new1")
+
+                        #Convert string to boolean
+                        if isinstance(llm_value, str):
+                            llm_value_upper = llm_value.strip().upper()
+                            if llm_value_upper == "YES":
+                                llm_value = True
+                            elif llm_value_upper in ("NO", "UNCERTAIN"):
+                                llm_value = False
+                        detail["llm_check"] = llm_value
+
+                    #Merge static results
+                    if "static" in detail and isinstance(detail["static"], dict):
+                        static = detail["static"]
+                        static_check = 1 if any(
+                            isinstance(v, list) and len(v) > 0 and v[0] is True
+                            for v in static.values()
+                        ) else 0
+                        detail["static_check"] = static_check
+
+            merged_entries.append(json.dumps(data, ensure_ascii=False))
+
+#Write merged output
 with open(output_jsonl, 'w', encoding='utf-8') as out:
     for line in merged_entries:
         out.write(line + '\n')
