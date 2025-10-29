@@ -90,7 +90,7 @@ def build_function_level_info(year, month):
                     continue
 
                 #Determine changed functions between the two files
-                changed_funcs = get_changed_functions_from_files_tree_sitter(before_file, after_file, language='c', debug=False)
+                changed_funcs = get_changed_functions_from_files_tree_sitter(before_file, after_file, language='c')
                 if not changed_funcs:
                     continue
 

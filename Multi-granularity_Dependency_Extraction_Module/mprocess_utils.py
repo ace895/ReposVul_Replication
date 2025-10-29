@@ -83,6 +83,10 @@ def extract_functions_with_spans_tree_sitter(file_path, language='c'):
     Use Tree-sitter to extract top-level function_definition nodes.
     Returns list of dicts: {'name','start_line','end_line','content'}.
     """
+    #Skip files that aren't in the given language
+    if language == 'c' and not str(file_path).endswith(".c"):
+        return []
+
     #Get parser for given language
     parser = get_parser(language)
     try:
@@ -115,7 +119,7 @@ def extract_functions_with_spans_tree_sitter(file_path, language='c'):
         })
     return results
 
-def get_changed_functions_from_files_tree_sitter(before_file, after_file, language='c', debug=False):
+def get_changed_functions_from_files_tree_sitter(before_file, after_file, language='c'):
     """
     Returns set of function names that changed between two C source files.
     Uses Tree-sitter spans + difflib-based changed line detection.
@@ -124,6 +128,9 @@ def get_changed_functions_from_files_tree_sitter(before_file, after_file, langua
     #Extract functions from both versions
     before_funcs = extract_functions_with_spans_tree_sitter(before_file, language)
     after_funcs = extract_functions_with_spans_tree_sitter(after_file, language)
+
+    if before_funcs == [] or after_funcs == []:
+        return []
 
     #Map names to list of functions
     before_by_name = {f["name"]: f for f in before_funcs}

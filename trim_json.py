@@ -54,10 +54,8 @@ def trim_jsonl_files(jsonl_files, limit=50):
                 json.dump(obj, f_out, ensure_ascii=False)
                 f_out.write("\n")
 
-if __name__ == "__main__":
-    jsonl_files = [
-        "Multi-granularity_Dependency_Extraction_Module//output//output_c_final.jsonl",
-        "Multi-granularity_Dependency_Extraction_Module//output//m_output.jsonl"
-    ]
+jsonl_files = [
+    "Trace-based_Filtering_Module//github//module4_output_final.jsonl"
+]
 
-    trim_jsonl_files(jsonl_files, limit=50)
+trim_jsonl_files(jsonl_files, limit=50)

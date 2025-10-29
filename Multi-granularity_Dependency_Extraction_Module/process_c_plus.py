@@ -7,10 +7,10 @@ import re
 import concurrent.futures
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
-import parse_getout_nearfunc_c_plus
+import parse_getout_nearfunc_c
 import traceback
 
-with open('/new_data/Last/ReposVul_function_c.jsonl', 'r', encoding = "utf-8") as r:
+with open('prepared_input/ReposVul_function_c.jsonl', 'r', encoding = "utf-8") as r:
     content = r.readlines()
 changed_content = list()
 for i in content:
@@ -41,7 +41,7 @@ def process_content(lock, line, new_list):
         if len(json_file['caller']) == 0 and len(json_file['callee']) == 0:
             print('all zero-{}'.format(function_id))
             with lock:
-                with open('/new_data/Challenge/newest/output/output_c_final.jsonl', 'a') as w1:
+                with open('prepared_input/ReposVul_function_c.jsonl', 'a') as w1:
                     w1.write(json.dumps(final_output_json) + '\n')
             return
         pre_json_line = dict()
@@ -55,13 +55,13 @@ def process_content(lock, line, new_list):
             print('caller activate {}'.format(function_id))
             publish_date = pre_json_line['file_path'].replace('\\', '/').split('/')[1]
             commit_id = pre_json_line['parents'][0]['commit_id_before']
-            path_before = '/new_data/Challenge/REEF-scripit-own/repos_before/{}/{}.zip'.format(publish_date, commit_id)
+            path_before = 'prepared_input/repos_before/{}/{}.zip'.format(publish_date, commit_id)
             if pre_json_line['file_target'] == '-1':
                 return
             with zipfile.ZipFile(path_before, 'r') as zip_ref:
                 contents = zip_ref.namelist()
             folder_name = contents[0][:-1]
-            path_after = '/new_data/Challenge/unzip_tmp'
+            path_after = 'tmp/unzip_tmp'
             print(folder_name)
             unzip_code_path = '{}/{}/{}'.format(path_after, folder_name, file_name)
             print(unzip_code_path)
@@ -95,7 +95,7 @@ def process_content(lock, line, new_list):
                     continue
                 print('function_id is {} and commit_id is {}'.format(json_file['function_id'], json_line_1['commit_id']))
                 file_name_1 = json_line_1['file_name']
-                func_name = parse_getout_nearfunc_c_plus.get_func_name_from_code(json_line_1['function'])
+                func_name = parse_getout_nearfunc_c.get_func_name_from_code(json_line_1['function'])
                 if func_name is None:
                     continue
                 func_abs_name = '.'.join(file_name.replace('/', '.').split('.')[:-1]) + '.' + func_name
@@ -116,20 +116,23 @@ def process_content(lock, line, new_list):
             w1.write(json.dumps(final_output_json) + '\n')
 
 
-with open('/new_data/Challenge/newest/output/output_c.jsonl', 'r', encoding = 'utf-8') as r1:
+with open('prepared_input/output_c.jsonl', 'r', encoding = 'utf-8') as r1:
     new_content = r1.readlines()
-with open('/new_data/Challenge/newest/output/output_c_final.jsonl', 'r', encoding = 'utf-8') as r2:
+with open('prepared_input/ReposVul_function_c.jsonl', 'r', encoding = 'utf-8') as r2:
     output_json = r2.readlines()
 new_list = list()
 for new_line in output_json:
     json_file_new = json.loads(new_line)
     new_list.append(json_file_new['function_id'])
-with multiprocessing.Manager() as manager:
-    lock = manager.Lock()
-    with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
-        futures = [
-            executor.submit(process_content, lock, line, new_list)
-            for line in new_content
-        ]
-        for future in concurrent.futures.as_completed(futures):
-            processed_line = future.result()
+    
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    with multiprocessing.Manager() as manager:
+        lock = manager.Lock()
+        with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
+            futures = [
+                executor.submit(process_content, lock, line, new_list)
+                for line in content
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                processed_line = future.result()

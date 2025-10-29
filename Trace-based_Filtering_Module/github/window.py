@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 import os
 import json
@@ -6,6 +7,17 @@ import time
 from itertools import groupby
 import re
 from datetime import datetime
+
+#Make required folders if missing
+for folder in [
+    "windows",
+    "repos_now",
+    "crawl_result_new2",
+    "crawl_result_new3",
+    "crawl_result_new4",
+    "crawl_result_last"
+]:
+    os.makedirs(folder, exist_ok=True)
 
 def clone_github_repo(repo_url, local_path):
     # print(local_path)
@@ -26,11 +38,11 @@ def git_log(local_path, date, commit_id):
         "--name-only"
     ]
 
-    after_output = subprocess.run(after_cmd, cwd=local_path, capture_output=True, text=True)
+    after_output = subprocess.run(after_cmd, cwd=local_path, capture_output=True, text=True, encoding="utf-8", errors="replace")
     with open(os.path.join("windows", f"{commit_id}_after.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(after_output.stdout.splitlines()[:200]))
 
-    before_output = subprocess.run(before_cmd, cwd=local_path, capture_output=True, text=True)
+    before_output = subprocess.run(before_cmd, cwd=local_path, capture_output=True, text=True, encoding="utf-8", errors="replace")
     with open(os.path.join("windows", f"{commit_id}_before.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(before_output.stdout.splitlines()[:200]))
     
@@ -38,10 +50,10 @@ def add_message(Year, Month):
 
     YM = Year+'_'+Month
     print(YM)
-    dir_path = './crawl_result_new/'
-    crawl_name = dir_path + YM + '_patch.jsonl'
+    current_dir = Path(__file__).resolve().parent.parent.parent
+    crawl_name = current_dir / 'Raw_Data_Crawling//github//crawl_result' / f"{YM}_patch.jsonl"
 
-    dir_path_new = './crawl_result_new2/'
+    dir_path_new = './/crawl_result_new2//'
     crawl_name_new = dir_path_new + YM + '_patch.jsonl'
 
     fetchs = []
@@ -315,16 +327,72 @@ def outdated_window(CVEs):
     
     return CVEs
 
-#Duplicate
-#def find(filename, windows, num):
-#    for i in range(num):
-#        if i >= len(windows):
-#            return 0
-#        filenames = windows[i]['files_name']
-#        for each in filenames:
-#            if filename == each:
-#                return 1
-#    return 0
+def integrate_module4_results(Year, Month):
+    """
+    Integrate Module 4's crawl_result_4 output with Module 3's enriched dataset.
+
+    Expected paths:
+      - Module 3 output:   Multi-granularity_Dependency_Extraction_Module/output/output_c_final.jsonl
+      - Module 4 output:   Trace-based_Filtering_Module/github/crawl_result_4.jsonl
+      - Repos folder:      Raw_Data_Crawling/github/repos
+    Output:
+      - merged_module3_module4.jsonl in the same directory as crawl_result_4
+    """
+
+    base_path = Path(__file__).resolve().parent.parent.parent
+    YM = Year+'_'+Month
+
+    module3_path = base_path / "Multi-granularity_Dependency_Extraction_Module" / "output" / "output_c_final.jsonl"
+    module4_path = base_path / "Trace-based_Filtering_Module" / "github" / "crawl_result_new4" / f"{YM}_patch.jsonl"
+    output_path  = base_path / "Trace-based_Filtering_Module" / "github" / "module4_output_final.jsonl"
+
+    # --- Load Module 3 dataset ---
+    with open(module3_path, "r", encoding="utf-8") as f3:
+        module3_data = [json.loads(line) for line in f3 if line.strip()]
+
+    # --- Load Module 4 dataset ---
+    with open(module4_path, "r", encoding="utf-8") as f4:
+        first_char = f4.read(1)
+        f4.seek(0)
+        if first_char == "[":
+            module4_data = json.load(f4)  # full JSON array
+        else:
+            module4_data = [json.loads(line) for line in f4 if line.strip()]
+
+    # --- Build a map from commit_id -> Module 4 entry ---
+    module4_map = {entry.get("commit_id"): entry for entry in module4_data}
+
+    print(f"Loaded {len(module3_data)} Module 3 entries")
+    print(f"Loaded {len(module4_data)} Module 4 entries")
+
+    merged_data = []
+    missing_count = 0
+
+    for entry in module3_data:
+        commit_id = entry.get("commit_id")
+
+        if commit_id in module4_map:
+            module4_entry = module4_map[commit_id]
+
+            # Merge only window-related fields
+            entry["windows_before"] = module4_entry.get("windows_before", "")
+            entry["windows_after"]  = module4_entry.get("windows_after", "")
+
+            # Optionally merge any additional stats (if present)
+            for key in ["func_before", "func_after", "lines_changed"]:
+                if key in module4_entry:
+                    entry[key] = module4_entry[key]
+        else:
+            missing_count += 1
+
+        merged_data.append(entry)
+
+    # --- Save final merged output ---
+    with open(output_path, "w", encoding="utf-8") as fout:
+        for record in merged_data:
+            fout.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    print(f"Dataset saved to: {output_path}")
     
 def main():
 
@@ -333,6 +401,11 @@ def main():
     Months = [str(i) for i in range(1, 13)]
     Months = ["8"]
     
+    for Year in Years:
+        for Month in Months:
+            integrate_module4_results(Year, Month)
+
+    return
     for Year in Years:
         for Month in Months:
             add_message(Year, Month)
@@ -354,3 +427,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

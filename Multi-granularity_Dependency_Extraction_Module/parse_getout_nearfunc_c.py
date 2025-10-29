@@ -2,15 +2,16 @@ from tree_sitter_language_pack import get_language, get_parser
 import os
 
 def traverse_outfunc(node, res = None):
-    if res is None:
-        res = list()
-    if node.type == 'function_definition':
-        res.append(node)
-    else:
-        if isinstance(node.children, list):
-            for n in node.children:
-                res.extend(traverse_outfunc(n, None))
-    return res
+    stack = [node]
+    results = []
+    while stack:
+        node = stack.pop()
+        if node.type == "function_definition":
+            results.append(node)
+        # Add children to stack
+        for child in reversed(node.children):
+            stack.append(child)
+    return results
 
 def traverse_outclass(node, res = None):
     if res is None:
@@ -137,6 +138,7 @@ def extract_function_numbers(file_path, language='c'):
                 'function_start': start_line,
                 'function_end': end_line
             })
+
     return functions
 
 # def get_start_end(unzip_code_path, func_code):
