@@ -55,7 +55,7 @@ def trim_jsonl_files(jsonl_files, limit=50):
                 f_out.write("\n")
 
 jsonl_files = [
-    "Trace-based_Filtering_Module//github//module4_output_final.jsonl"
+    
 ]
 
 trim_jsonl_files(jsonl_files, limit=50)

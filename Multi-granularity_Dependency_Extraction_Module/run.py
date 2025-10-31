@@ -25,7 +25,7 @@ def build_function_level_info(year, month):
     before_root = Path(REPOS_BEFORE_ROOT) / YM
     after_root = Path(REPOS_AFTER_ROOT) / YM
 
-    all_patches_json_path = current_dir / "prepared_input" / "output_c.jsonl"
+    all_patches_json_path = current_dir / "prepared_input" / "module2_output.jsonl"
     all_patches = []
 
     #Load output of module 2
@@ -145,7 +145,7 @@ def build_function_level_info(year, month):
 
 def add_to_dataset():
     #Load original dataset
-    original_path = current_dir / "Multi-granularity_Dependency_Extraction_Module" / "prepared_input" / "output_c.jsonl"
+    original_path = current_dir / "Multi-granularity_Dependency_Extraction_Module" / "prepared_input" / "module2_output.jsonl"
     with open(original_path, "r", encoding="utf-8") as f:
         original_entries = [json.loads(line) for line in f]
 
@@ -163,11 +163,12 @@ def add_to_dataset():
             entry["functions_before"] = funcs_entry.get("functions_before", [])
             entry["functions_after"] = funcs_entry.get("functions_after", [])
 
-    with open("output/output_c_final.jsonl", "w", encoding="utf-8") as f:
+    with open("output/module3_output.jsonl", "w", encoding="utf-8") as f:
         for e in original_entries:
             f.write(json.dumps(e) + "\n")
 
-YEAR = "2016"
-MONTH = "8"
-build_function_level_info(YEAR, MONTH)
-add_to_dataset()
+def main(Years=['2016'], Months=['8']):
+    for year in Years:
+        for month in Months:
+            build_function_level_info(year, month)
+            add_to_dataset()

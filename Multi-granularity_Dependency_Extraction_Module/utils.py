@@ -10,8 +10,19 @@ import re
 #Build caller-callee trees
 def build_dependency_trees(repo_path, funcs_info, language='c'):
     """
-    Build dependency information of functions
-    Returns caller tree and callee tree (dictionaries that map names to a list of functions)
+    Builds caller-callee dependency trees for all functions in the given repository using cflow.
+
+    Parameters:
+        repo_path (str | Path): Path to the repository containing source code files.
+        funcs_info (list[dict]): List of dictionaries with function information, each containing:
+                                 - "file": relative path to the source file
+                                 - "name": function name
+        language (str, optional): Programming language of the source files (default is 'c').
+
+    Returns:
+        tuple[dict, dict]:
+            - caller_tree: Dictionary mapping each caller function to a list of callee functions.
+            - callee_tree: Dictionary mapping each callee function to a list of caller functions.
     """
     caller_tree = {}
     callee_tree = {}
@@ -80,8 +91,18 @@ def build_dependency_trees(repo_path, funcs_info, language='c'):
 
 def extract_functions_with_spans_tree_sitter(file_path, language='c'):
     """
-    Use Tree-sitter to extract top-level function_definition nodes.
-    Returns list of dicts: {'name','start_line','end_line','content'}.
+    Extracts top-level function definitions from a source file using Tree-sitter and returns their spans.
+
+    Parameters:
+        file_path (str | Path): Path to the source file to be parsed.
+        language (str, optional): Programming language of the source file (default is 'c').
+
+    Returns:
+        list[dict]: A list of dictionaries, each representing a function with:
+            - "name" (str): Function name.
+            - "start_line" (int): Starting line number of the function.
+            - "end_line" (int): Ending line number of the function.
+            - "content" (str): Full text content of the function body.
     """
     #Skip files that aren't in the given language
     if language == 'c' and not str(file_path).endswith(".c"):
@@ -121,10 +142,16 @@ def extract_functions_with_spans_tree_sitter(file_path, language='c'):
 
 def get_changed_functions_from_files_tree_sitter(before_file, after_file, language='c'):
     """
-    Returns set of function names that changed between two C source files.
-    Uses Tree-sitter spans + difflib-based changed line detection.
-    """
+    Identifies which functions have changed between two versions of a source file using Tree-sitter and difflib.
 
+    Parameters:
+        before_file (str | Path): Path to the 'before' version of the source file.
+        after_file (str | Path): Path to the 'after' version of the source file.
+        language (str, optional): Programming language of the source files (default is 'c').
+
+    Returns:
+        set[str]: A set of function names that were modified, added, or removed between the two files.
+    """
     #Extract functions from both versions
     before_funcs = extract_functions_with_spans_tree_sitter(before_file, language)
     after_funcs = extract_functions_with_spans_tree_sitter(after_file, language)

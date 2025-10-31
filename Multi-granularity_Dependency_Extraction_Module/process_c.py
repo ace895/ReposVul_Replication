@@ -135,7 +135,7 @@ def process_content(lock, line, new_list):
         with open('output/output_c.jsonl', 'a') as w1:
             w1.write(json.dumps(final_output_json) + '\n')
 
-with open('prepared_input/output_c.jsonl', 'r', encoding = "utf-8") as r:
+with open('prepared_input/module2_output_c.jsonl', 'r', encoding = "utf-8") as r:
     content = r.readlines()
 with open('prepared_input/ReposVul_function_c.jsonl', 'r', encoding = 'utf-8') as r1:
     new_content = r1.readlines()
