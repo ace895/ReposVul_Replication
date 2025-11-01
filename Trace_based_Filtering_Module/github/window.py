@@ -416,20 +416,20 @@ def integrate_module4_results(Year, Month):
     Integrates Module 4's crawl_result output with Module 3's enriched dataset.
 
     Input files:
-        Multi-granularity_Dependency_Extraction_Module/output/output_c_final.jsonl - Module 3 dataset
-        Trace-based_Filtering_Module/github/crawl_result_4.jsonl - Module 4 dataset
+        Multi_granularity_Dependency_Extraction_Module/output/module3_output.jsonl - Module 3 dataset
+        Trace_based_Filtering_Module/github/crawl_result_4.jsonl - Module 4 dataset
         Raw_Data_Crawling/github/repos/ - local cloned repositories
 
     Output files:
-        Trace-based_Filtering_Module/github/module4_output.jsonl - merged dataset with window info and additional stats
+        Trace_based_Filtering_Module/github/module4_output.jsonl - merged dataset with window info and additional stats
     """
 
     base_path = Path(__file__).resolve().parent.parent.parent
     YM = Year+'_'+Month
 
-    module3_path = base_path / "Multi-granularity_Dependency_Extraction_Module" / "output" / "output_c_final.jsonl"
-    module4_path = base_path / "Trace-based_Filtering_Module" / "github" / "crawl_result_new4" / f"{YM}_patch.jsonl"
-    output_path  = base_path / "Trace-based_Filtering_Module" / "github" / "module4_output.jsonl"
+    module3_path = base_path / "Multi_granularity_Dependency_Extraction_Module" / "output" / "module3_output.jsonl"
+    module4_path = base_path / "Trace_based_Filtering_Module" / "github" / "crawl_result_new4" / f"{YM}_patch.jsonl"
+    output_path  = base_path / "Trace_based_Filtering_Module" / "github" / "module4_output.jsonl"
 
     #Load Module 3 dataset
     with open(module3_path, "r", encoding="utf-8") as f3:

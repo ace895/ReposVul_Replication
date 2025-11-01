@@ -14,7 +14,7 @@ def get_files_before_path(publish_date: str):
 
 #Set input/output paths
 project_root = Path(__file__).resolve().parents[1]
-root_dir = project_root / "Multi-granularity_Dependency_Extraction_Module"
+root_dir = project_root / "Multi_granularity_Dependency_Extraction_Module"
 prepared_dir = root_dir / "prepared_input"
 repos_before_dir = prepared_dir / "repos_before"
 files_before_root = project_root / "Raw_Data_Crawling" / "github" / "files_before"

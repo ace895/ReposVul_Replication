@@ -1,10 +1,17 @@
-raw-data/
 venv/
-.git-orig/
-Raw_Data_Crawling/github/repos/
-Raw_Data_Crawling/github/repos_before/
-Trace-based_Filtering_Module/github/windows/
-Trace-based_Filtering_Module/github/repos_now/
-Multi-granularity_Dependency_Extraction_Module/__pycache__/
 TODO.md
 .env
+__pycache__/
+
+#Original ReposVul repo
+.git-orig/
+
+#ReposVul original raw data
+raw-data/
+
+#Ignore extracted repos to decrease size
+Raw_Data_Crawling/github/repos/
+Raw_Data_Crawling/github/repos_before/
+Trace_based_Filtering_Module/github/windows/
+Trace_based_Filtering_Module/github/repos_now/
+Multi_granularity_Dependency_Extraction_Module/prepared_input/repos_before/*

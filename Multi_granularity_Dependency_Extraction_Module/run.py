@@ -13,7 +13,7 @@ REPOS_AFTER_ROOT = current_dir / "Raw_Data_Crawling" / "github" / "repos"
 REPOS_BEFORE_ROOT = current_dir / "Raw_Data_Crawling" / "github" / "repos_before"
 
 #Path to function output is stored
-OUTPUT_PATH = current_dir / "Multi-granularity_Dependency_Extraction_Module" / "output" / "m_output.jsonl"
+OUTPUT_PATH = current_dir / "Multi_granularity_Dependency_Extraction_Module" / "output" / "m_output.jsonl"
 
 def build_function_level_info(year, month):
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
@@ -145,7 +145,7 @@ def build_function_level_info(year, month):
 
 def add_to_dataset():
     #Load original dataset
-    original_path = current_dir / "Multi-granularity_Dependency_Extraction_Module" / "prepared_input" / "module2_output.jsonl"
+    original_path = current_dir / "Multi_granularity_Dependency_Extraction_Module" / "prepared_input" / "module2_output.jsonl"
     with open(original_path, "r", encoding="utf-8") as f:
         original_entries = [json.loads(line) for line in f]
 
