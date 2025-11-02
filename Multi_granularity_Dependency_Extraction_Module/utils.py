@@ -107,6 +107,8 @@ def extract_functions_with_spans_tree_sitter(file_path, language='c'):
     #Skip files that aren't in the given language
     if language == 'c' and not str(file_path).endswith(".c"):
         return []
+    elif language == 'cpp' and not str(file_path).endswith((".cpp", ".cxx", ".cc", ".hpp", ".h")):
+        return []
 
     #Get parser for given language
     parser = get_parser(language)

@@ -154,15 +154,15 @@ module2_files_c = [
 ]
 
 module2_files_cpp = [
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_C++_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_C++_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_C++_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_C++.jsonl",
+    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_cpp_new.jsonl",
+    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_cpp_new.jsonl",
+    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_cpp_new.jsonl",
+    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_cpp.jsonl",
 ]
 
 #Merge and write outputs
 merged_entries_c = merge_module2_outputs(module2_files_c, prepared_dir / "module2_output_c.jsonl")
-merged_entries_cpp = merge_module2_outputs(module2_files_cpp, prepared_dir / "module2_output_c++.jsonl")
+merged_entries_cpp = merge_module2_outputs(module2_files_cpp, prepared_dir / "module2_output_cpp.jsonl")
 
 #Zip C files
 created_zips_c = zip_commits(
