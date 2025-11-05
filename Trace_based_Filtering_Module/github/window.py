@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 
 #Create required folders if they do not exist
+BASE_DIR = Path(__file__).resolve().parent
 for folder in [
     "windows",
     "repos_now",
@@ -17,7 +18,7 @@ for folder in [
     "crawl_result_new4",
     "crawl_result_last"
 ]:
-    os.makedirs(folder, exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, folder), exist_ok=True)
 
 def clone_github_repo(repo_url, local_path):
     """
@@ -56,14 +57,20 @@ def git_log(local_path, date, commit_id):
         "--name-only"
     ]
 
+    # Ensure the output directory exists
+    windows_dir = BASE_DIR / "windows"
+    os.makedirs(windows_dir, exist_ok=True)
+
     #Save recent commits after the date
     after_output = subprocess.run(after_cmd, cwd=local_path, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    with open(os.path.join("windows", f"{commit_id}_after.txt"), "w", encoding="utf-8") as f:
+    after_file = windows_dir / f"{commit_id}_after.txt"
+    with open(after_file, "w", encoding="utf-8") as f:
         f.write("\n".join(after_output.stdout.splitlines()[:200]))
 
     #Save older commits before the date
     before_output = subprocess.run(before_cmd, cwd=local_path, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    with open(os.path.join("windows", f"{commit_id}_before.txt"), "w", encoding="utf-8") as f:
+    before_file = windows_dir / f"{commit_id}_before.txt"
+    with open(before_file, "w", encoding="utf-8") as f:
         f.write("\n".join(before_output.stdout.splitlines()[:200]))
     
 def add_message(Year, Month):
@@ -77,12 +84,11 @@ def add_message(Year, Month):
         crawl_result_new2/<Year>_<Month>_patch.jsonl
     """
     YM = Year+'_'+Month
-    print(YM)
     current_dir = Path(__file__).resolve().parent.parent.parent
-    crawl_name = current_dir / 'Raw_Data_Crawling//github//crawl_result' / f"{YM}_patch.jsonl"
+    crawl_name = current_dir / 'Raw_Data_Crawling' / 'github' / 'crawl_result' / f"{YM}_patch.jsonl"
 
-    dir_path_new = './/crawl_result_new2//'
-    crawl_name_new = dir_path_new + YM + '_patch.jsonl'
+    dir_path_new = BASE_DIR / 'crawl_result_new2'
+    crawl_name_new = str(dir_path_new / f'{YM}_patch.jsonl')
 
     fetchs = []
     if not os.path.exists(crawl_name):
@@ -99,8 +105,8 @@ def add_message(Year, Month):
 
             record = content[i]
             record['commit_id'] = commit_id
-            path_before = os.path.join("windows", f"{commit_id}_before.txt")
-            path_after = os.path.join("windows", f"{commit_id}_after.txt")
+            path_before = os.path.join(BASE_DIR, "windows", f"{commit_id}_before.txt")
+            path_after = os.path.join(BASE_DIR, "windows", f"{commit_id}_after.txt")
 
             #If logs already exist, read them
             if os.path.exists(path_before) and os.path.exists(path_after):
@@ -114,7 +120,7 @@ def add_message(Year, Month):
                 continue
 
             #Clone repo if missing and extract logs
-            local_path = './repos_now/' + url.partition('/repos/')[2].partition('/commits/')[0].replace('/','_')
+            local_path = os.path.join(BASE_DIR, 'repos_now', url.partition('/repos/')[2].partition('/commits/')[0].replace('/','_'))
             download_url = 'https://github.com/' + url.partition('/repos/')[2].partition('/commits/')[0] + '.git'
 
             if not os.path.exists(local_path):
@@ -149,12 +155,11 @@ def add_message_1(Year, Month):
         crawl_result_new3/<Year>_<Month>_patch.jsonl
     """
     YM = Year+'_'+Month
-    print(YM)
-    dir_path = './crawl_result_new2/'
-    crawl_name = dir_path + YM + '_patch.jsonl'
+    dir_path = BASE_DIR / 'crawl_result_new2'
+    crawl_name = str(dir_path / f'{YM}_patch.jsonl')
 
-    dir_path_new = './crawl_result_new3/'
-    crawl_name_new = dir_path_new + YM + '_patch.jsonl'
+    dir_path_new = BASE_DIR / 'crawl_result_new3'
+    crawl_name_new = str(dir_path_new / f'{YM}_patch.jsonl')
 
     fetchs = []
     if not os.path.exists(crawl_name):
@@ -245,15 +250,12 @@ def add_message_2(Year, Month):
         crawl_result_new4/<Year>_<Month>_patch.jsonl
     """
     YM = Year+'_'+Month
-    print(YM)
-    dir_path = './crawl_result_new2/'
-    crawl_name = dir_path + YM + '_patch.jsonl'
 
-    dir_path_new = './crawl_result_new3/'
-    crawl_name_new = dir_path_new + YM + '_patch.jsonl'
+    dir_path_new = BASE_DIR / 'crawl_result_new3'
+    crawl_name_new = str(dir_path_new / f'{YM}_patch.jsonl')
 
-    dir_path_new1 = './crawl_result_new4/'
-    crawl_name_new1 = dir_path_new1 + YM + '_patch.jsonl'
+    dir_path_new1 = BASE_DIR / 'crawl_result_new4'
+    crawl_name_new1 = str(dir_path_new1 / f'{YM}_patch.jsonl')
     fetchs = []
     if not os.path.exists(crawl_name_new):
         return
@@ -282,16 +284,15 @@ def get_alldate():
     Returns:
         dict_date: {filename: latest datetime of modification}
     """
-    Years = [str(year) for year in range(2001, 2024)]
+    Years = [str(year) for year in range(2001, 2025)]
     Months = [str(i) for i in range(1, 13)]
     dict_date = {}
 
     for Year in Years:
         for Month in Months:
             YM = Year+'_'+Month
-            print(YM)
-            dir_path = './crawl_result_new4/'
-            crawl_name = dir_path + YM + '_patch.jsonl'
+            dir_path = BASE_DIR / 'crawl_result_new4/'
+            crawl_name = str(dir_path / f'{YM}_patch.jsonl')
 
             #Skip if the patch file does not exist
             if not os.path.exists(crawl_name):
@@ -332,8 +333,8 @@ def add_message_3(Year, Month, dict_date):
     YM = Year+'_'+Month
     print(YM)
 
-    dir_path = './crawl_result_new4/'
-    crawl_name = dir_path + YM + '_patch.jsonl'
+    dir_path = BASE_DIR / 'crawl_result_new4'
+    crawl_name = str(dir_path / f'{YM}_patch.jsonl')
 
     #Skip if patch file does not exist
     if not os.path.exists(crawl_name):
@@ -369,8 +370,8 @@ def add_message_3(Year, Month, dict_date):
             fetchs.append(record)
 
     #Save the updated patch data with outdated flags
-    dir_path_new = './crawl_result_last/'
-    crawl_name_new = dir_path_new + YM + '_patch.jsonl'
+    dir_path_new = BASE_DIR / 'crawl_result_last'
+    crawl_name_new = str(dir_path_new / f'{YM}_patch.jsonl')
     with open(crawl_name_new, "w", encoding="utf-8") as rf:
         rf.write(json.dumps(fetchs, indent=4, separators=(',', ': ')))
 

@@ -4,14 +4,6 @@ import zipfile
 from pathlib import Path
 from datetime import datetime
 
-def get_files_before_path(publish_date: str):
-    """Convert publish_date like 'August 7, 2016' to '2016_8'"""
-    try:
-        dt = datetime.strptime(publish_date, "%B %d, %Y")
-        return f"{dt.year}_{dt.month}"
-    except Exception:
-        return None
-
 #Set input/output paths
 project_root = Path(__file__).resolve().parents[1]
 root_dir = project_root / "Multi_granularity_Dependency_Extraction_Module"
@@ -19,6 +11,14 @@ prepared_dir = root_dir / "prepared_input"
 repos_before_dir = prepared_dir / "repos_before"
 files_before_root = project_root / "Raw_Data_Crawling" / "github" / "files_before"
 os.makedirs(repos_before_dir, exist_ok=True)
+
+def get_files_before_path(publish_date: str):
+    """Convert publish_date like 'August 7, 2016' to '2016_8'"""
+    try:
+        dt = datetime.strptime(publish_date, "%B %d, %Y")
+        return f"{dt.year}_{dt.month}"
+    except Exception:
+        return None
 
 def merge_module2_outputs(module2_files, output_jsonl):
     """
@@ -140,44 +140,41 @@ def zip_commits(merged_entries, files_before_root, repos_before_dir):
             continue
 
     if missing_files:
-        with open(prepared_dir / f"missing_files_{lang}.txt", "w", encoding='utf-8') as mf:
+        with open(prepared_dir / f"missing_files.txt", "w", encoding='utf-8') as mf:
             mf.write("\n".join(missing_files))
 
     return created_zips
 
-#Define input files
-module2_files_c = [
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_C_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_C_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_C_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_C.jsonl",
-]
+def main():
+    #Define input files
+    module2_files_c = [
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_C_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_C_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_C_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_C.jsonl",
+    ]
 
-module2_files_cpp = [
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_cpp_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_cpp_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_cpp_new.jsonl",
-    project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_cpp.jsonl",
-]
+    module2_files_cpp = [
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "cppcheck" / "merge_cpp_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "flawfinder" / "merge_cpp_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "semgrep" / "merge_cpp_new.jsonl",
+        project_root / "Vulnerability_Untangling_Module" / "static" / "output" / "llm" / "merge_cpp.jsonl",
+    ]
 
-#Merge and write outputs
-merged_entries_c = merge_module2_outputs(module2_files_c, prepared_dir / "module2_output_c.jsonl")
-merged_entries_cpp = merge_module2_outputs(module2_files_cpp, prepared_dir / "module2_output_cpp.jsonl")
+    #Merge and write outputs
+    merged_entries_c = merge_module2_outputs(module2_files_c, prepared_dir / "module2_output_c.jsonl")
+    merged_entries_cpp = merge_module2_outputs(module2_files_cpp, prepared_dir / "module2_output_cpp.jsonl")
 
-#Zip C files
-created_zips_c = zip_commits(
-    merged_entries_c,
-    files_before_root,
-    repos_before_dir,
-    prepared_dir,
-    lang="c"
-)
+    #Zip C files
+    created_zips_c = zip_commits(
+        merged_entries_c,
+        files_before_root,
+        repos_before_dir,
+    )
 
-#Zip C++ files
-created_zips_cpp = zip_commits(
-    merged_entries_cpp,
-    files_before_root,
-    repos_before_dir,
-    prepared_dir,
-    lang="cpp"
-)
+    #Zip C++ files
+    created_zips_cpp = zip_commits(
+        merged_entries_cpp,
+        files_before_root,
+        repos_before_dir,
+    )

@@ -5,11 +5,13 @@ Runs all modules
 from Raw_Data_Crawling.github.run import main as run_module1
 from Vulnerability_Untangling_Module.run import main as run_module2
 from Multi_granularity_Dependency_Extraction_Module.run import main as run_module3
+from Multi_granularity_Dependency_Extraction_Module.prepare_inputs import main as prepare_inputs_for_module3
 from Trace_based_Filtering_Module.github.window import main as run_module4
 
 def main(Years=['2016'], Months=['8']):
-    run_module1(Years, Months)
-    run_module2(Years, Months)
+    run_module1(Years, Months, 5)
+    run_module2()
+    prepare_inputs_for_module3()
     run_module3(Years, Months)
     run_module4(Years, Months)
 

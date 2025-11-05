@@ -2,7 +2,7 @@ import os
 import json
 import zipfile
 from pathlib import Path
-from mprocess_utils import extract_functions_with_spans_tree_sitter, get_changed_functions_from_files_tree_sitter, build_dependency_trees
+from .utils import extract_functions_with_spans_tree_sitter, get_changed_functions_from_files_tree_sitter, build_dependency_trees
 
 current_dir = Path(__file__).resolve().parent.parent
 
@@ -14,6 +14,8 @@ REPOS_BEFORE_ROOT = current_dir / "Raw_Data_Crawling" / "github" / "repos_before
 
 #Path to function output is stored
 OUTPUT_PATH = current_dir / "Multi_granularity_Dependency_Extraction_Module" / "output" / "m_output.jsonl"
+
+os.makedirs(current_dir / "Multi_granularity_Dependency_Extraction_Module" / "output", exist_ok=True)
 
 def build_function_level_info(year, month):
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
@@ -170,7 +172,7 @@ def add_to_dataset():
             entry["functions_before"] = funcs_entry.get("functions_before", [])
             entry["functions_after"] = funcs_entry.get("functions_after", [])
 
-    with open("output/module3_output.jsonl", "w", encoding="utf-8") as f:
+    with open(current_dir / "Multi_granularity_Dependency_Extraction_Module/output/module3_output.jsonl", "w", encoding="utf-8") as f:
         for e in original_entries:
             f.write(json.dumps(e) + "\n")
 

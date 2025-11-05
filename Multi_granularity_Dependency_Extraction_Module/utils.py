@@ -2,7 +2,7 @@ import os
 import subprocess
 import difflib
 from tree_sitter_language_pack import get_parser
-from parse_getout_nearfunc_c import traverse_outfunc, get_func_name
+from .parse_getout_nearfunc_c import traverse_outfunc, get_func_name
 from pathlib import Path
 import difflib
 import re

@@ -1,3 +1,4 @@
+from pathlib import Path
 from urllib.parse import unquote
 from bs4 import BeautifulSoup
 import re
@@ -9,13 +10,37 @@ from urllib.request import Request, urlopen
 import requests
 import subprocess
 from tqdm import tqdm
+from dotenv import load_dotenv
+from .merge import main as merge
 
+load_dotenv()
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 
-def step_one(Year, Month):
+#Make required directories
+BASE_DIR = Path(__file__).resolve().parent
+for folder in [
+    "crawl_result",
+    "crawl_result_new",
+    "files",
+    "files_before",
+    "logs",
+    "merge_result_new",
+    os.path.join("merge_result_new", "language"),
+    os.path.join("merge_result_new", "project"),
+    os.path.join("merge_result_new", "project_big"),
+    os.path.join("merge_result_new", "time"),
+    "rawcode_result",
+    "repos",
+    "repos_before",
+    "results"
+]:
+    os.makedirs(os.path.join(BASE_DIR, folder), exist_ok=True)
+
+def step_one(Year, Month, limit=None):
     """
     Scrapes Mend.io for CVE data for a given Year and Month.
     Extracts vulnerability details, saves them in logs and results JSONL files.
+    Will extract the first 'limit' entries, if provided (used for testing).
     
     Input files:
         logs/<Year>_<Month>.log (if it exists) - stores previously scraped CVE URLs
@@ -27,8 +52,8 @@ def step_one(Year, Month):
     """
     #Setup filenames and URLs
     YM = Year + '_' + Month
-    filename = 'logs/' + YM + '.log'
-    res_filename = 'results/' + YM + '.jsonl'
+    filename = BASE_DIR / 'logs' / f"{YM}.log"
+    res_filename = BASE_DIR / 'results' / f"{YM}.jsonl"
 
     #Check if log file exists, else scrape the data
     if not os.path.exists(filename):
@@ -37,7 +62,7 @@ def step_one(Year, Month):
         url = f"https://www.mend.io/vulnerability-database/full-listing/{Year}/{Month}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://www.mend.io/vulnerability-database/",
@@ -52,30 +77,30 @@ def step_one(Year, Month):
         links = []
         try:
             max_pagenumber = int(soup.find_all("li", class_="vuln-pagination-item")[-2].text.strip())
-        except Exception as e:
+        except Exception:
             max_pagenumber = 1
 
-        for link in soup.find_all("a", href=re.compile("^/vulnerability-database/CVE")):
-            name = link.text
-            href = link.get("href")
-            links.append((name, href))
+        #Limit the number of links collected (for testing)
+        def collect_links(soup, links, limit):
+            for link in soup.find_all("a", href=re.compile("^/vulnerability-database/CVE")):
+                if limit is not None and len(links) >= limit:
+                    break
+                name = link.text
+                href = link.get("href")
+                links.append((name, href))
+            return links
 
-        #Scrape subsequent pages if more exist
-        if max_pagenumber > 1:
-            for i in range(2,max_pagenumber+1):
-                url = "https://www.mend.io/vulnerability-database/full-listing/"+Year+"/"+ Month + '/'+str(i)
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Referer": "https://www.mend.io/vulnerability-database/"
-                }
+        #Collect from first page
+        links = collect_links(soup, links, limit)
+
+        #Scrape subsequent pages if needed
+        if max_pagenumber > 1 and (limit is None or len(links) < limit):
+            for i in range(2, max_pagenumber + 1):
+                if limit is not None and len(links) >= limit:
+                    break
+                url = f"https://www.mend.io/vulnerability-database/full-listing/{Year}/{Month}/{i}"
                 soup = BeautifulSoup(urlopen(Request(url, headers=headers)).read(), 'html.parser')
-                for link in soup.find_all("a", href=re.compile("^/vulnerability-database/CVE")):
-                    name = link.text
-                    href = link.get("href")
-                    links.append((name, href))
+                links = collect_links(soup, links, limit)
 
         #Save extracted links to log file
         with open(filename,'w') as f:
@@ -230,9 +255,9 @@ def step_two(Year, Month):
     """
     #Setup paths
     YM = Year+'_'+Month
-    res_filename = 'results/' + YM + '.jsonl'
-    patch_name = 'crawl_result/' + YM + '_patch.jsonl'
-    error_file = 'crawl_result/' + YM + '_patch_error.txt'
+    res_filename = BASE_DIR / 'results' / f"{YM}.jsonl"
+    patch_name = BASE_DIR / 'crawl_result' / f"{YM}_patch.jsonl"
+    error_file = BASE_DIR / 'crawl_result' / f"{YM}_patch_error.txt"
 
     #Exit if no results found
     if not os.path.exists(res_filename):
@@ -313,9 +338,9 @@ def raw_code_before(raw_url, file_id, YM):
     """
     try:
         #Create directory for storing "before" files based on year-month
-        dir_path = f"files_before/{YM}"
+        dir_path = BASE_DIR / f"files_before/{YM}"
         os.makedirs(dir_path, exist_ok=True)
-        file_path = os.path.join(dir_path, str(file_id))
+        file_path = dir_path / str(file_id)
 
         #Skip downloading if the file already exists
         if os.path.exists(file_path):
@@ -383,8 +408,8 @@ def add_message(file_id, YM):
     Returns:
         str: The content of the file if found, otherwise an empty string.
     """
-    dir_path = "files_before/" + YM
-    file_path = os.path.join(dir_path, str(file_id))
+    dir_path = BASE_DIR / f"files_before/{YM}"
+    file_path = dir_path / str(file_id)
     
     #Verify that the file exists before attempting to read it
     if not os.path.exists(file_path):
@@ -414,9 +439,9 @@ def step_three(Year, Month):
     patches_id = 0
     files_id = 0
     YM = Year + '_' + Month
-    patch_name = 'crawl_result/' + YM + '_patch.jsonl'
-    rawcode_name = 'rawcode_result/' + YM + '_rawcode.jsonl'
-    error_file = 'rawcode_result/' + YM + '_rawcode_error.txt'
+    patch_name = BASE_DIR / 'crawl_result' / f"{YM}_patch.jsonl"
+    rawcode_name = BASE_DIR / 'rawcode_result' / f"{YM}_rawcode.jsonl"
+    error_file = BASE_DIR / 'rawcode_result' / f"{YM}_rawcode_error.txt"
 
     #Skip if no patch file exists
     if not os.path.exists(patch_name):
@@ -457,14 +482,15 @@ def step_three(Year, Month):
                         continue
 
                     #Download the raw source file and save it locally
-                    dir_path = "files/" + YM
+                    dir_path = BASE_DIR / f"files/{YM}"
                     os.makedirs(dir_path, exist_ok=True)
-                    file_path = os.path.join(dir_path, str(files_id))
-                    wget_command = "wget -O " + file_path + " " + raw_url
+                    file_path = str(dir_path / str(files_id))
+                    wget_command = f'wget -O "{file_path}" "{raw_url}"'
                     subprocess.run(wget_command, shell=True)
 
                     #Read file content from disk
                     with open(file_path, 'r', encoding='utf-8') as file:
+                        print("getting content")
                         content = file.read()
 
                     #Construct the JSON object for this file entry
@@ -521,15 +547,14 @@ def get_repos(Year, Month):
         repos/<Year>_<Month>/<commit_id>.zip - repository archives for the listed commits
     """
     YM = Year + '_' + Month
-    mergefile_time = 'merge_result_new/time/merge_'
-    merge_name = mergefile_time + YM + '.jsonl'
+    merge_name = BASE_DIR / 'merge_result_new/time' / f"merge_{YM}.jsonl"
 
     #Skip if no merge file exists
     if not os.path.exists(merge_name):
         return
 
     #Prepare destination directory for repository archives
-    dir_path = 'repos/' + YM
+    dir_path = BASE_DIR / f'repos/{YM}'
     os.makedirs(dir_path, exist_ok=True)
 
     #Read merge file entries and process each
@@ -542,7 +567,7 @@ def get_repos(Year, Month):
             commit_id = js['commit_id']
             
             repos_name = str(commit_id) + ".zip"
-            repos_file = os.path.join(dir_path, repos_name)
+            repos_file = dir_path / repos_name
             repos_url = raw_url.replace("commit/" + str(commit_id), "archive/" + str(commit_id)) + ".zip"
 
             #Use subprocess to run wget for downloading repository archives
@@ -565,11 +590,8 @@ def add_message_before(Year, Month):
         crawl_result_new/<Year>_<Month>_patch.jsonl - JSON with added parent commit info
     """
     YM = Year + '_' + Month
-    dir_path = 'crawl_result/'
-    crawl_name = dir_path + YM + '_patch.jsonl'
-
-    dir_path_new = 'crawl_result_new/'
-    crawl_name_new = dir_path_new + YM + '_patch.jsonl'
+    crawl_name = BASE_DIR / 'crawl_result' / f"{YM}_patch.jsonl"
+    crawl_name_new = BASE_DIR / 'crawl_result_new' / f"{YM}_patch.jsonl"
 
     fetchs = []
 
@@ -632,15 +654,15 @@ def get_repos_before(Year, Month):
         repos_before/<Year>_<Month>/<commit_id>.zip - ZIP archive of parent commit repositories
     """
     YM = Year + '_' + Month
-    mergefile_time = 'merge_result_new/time/merge_'
-    merge_name = mergefile_time + YM + '.jsonl'
+    mergefile_time = BASE_DIR / 'merge_result_new/time/merge_'
+    merge_name = str(mergefile_time) + YM + '.jsonl'
 
     #Exit if the merge file does not exist for this year-month
     if not os.path.exists(merge_name):
         return
 
     #Ensure directory for old repositories exists
-    dir_path = 'repos_before/' + YM
+    dir_path = BASE_DIR / f'repos_before/{YM}'
     os.makedirs(dir_path, exist_ok=True)
 
     #Read each line of the merge file (each line contains one commit entry)
@@ -662,7 +684,7 @@ def get_repos_before(Year, Month):
                 commit_id = parent['commit_id_before']
 
                 repos_name = str(commit_id) + ".zip"
-                repos_file = os.path.join(dir_path, repos_name)
+                repos_file = dir_path / repos_name
                 repos_url = raw_url.replace("commit/" + str(commit_id),
                                             "archive/" + str(commit_id)) + ".zip"
 
@@ -674,11 +696,11 @@ def get_repos_before(Year, Month):
                     print(f"Error downloading file: {e}")
 
 
-def run_steps(Years, Months):
+def run_steps(Years, Months, limit=None):
     #Run the first step for each year-month combination
     for Year in Years:
         for Month in Months:
-            step_one(Year, Month)
+            step_one(Year, Month, limit)
 
     #Run the second step for each year-month combination
     for Year in Years:
@@ -689,7 +711,10 @@ def run_steps(Years, Months):
     for Year in Years:
         for Month in Months:
             step_three(Year, Month)
-            add_message(Year, Month)
+    
+    for Year in Years:
+        for Month in Months:
+            add_message_before(Year, Month)
 
 def get_all_repos(Years, Months):
     #Download repository archives for the processed commits
@@ -700,19 +725,17 @@ def get_all_repos(Years, Months):
     #Fetch metadata and download parent commit repositories
     for Year in Years:
         for Month in Months:
-            add_message_before(Year, Month)
             get_repos_before(Year, Month)
 
 #Called by main script
-def main(Years=['2016'], Months=['8']):
-    run_steps(Years, Months)
+def main(Years=['2016'], Months=['8'], limit=None):
+    run_steps(Years, Months, limit)
     print("Scraped CVE data and patch data")
 
-    import merge
-    merge.main()
+    merge(Years, Months)
     print("Merged data")
     
-    get_all_repos()
+    get_all_repos(Years, Months)
     print("Extracted repos")
 
 if __name__ == '__main__':

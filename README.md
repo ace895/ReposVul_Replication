@@ -1,5 +1,13 @@
 # ReposVul Replication Project Overview
 
+## Setup
+
+1. Install all dependencies: ```pip install -r requirements.txt```
+
+2. Create a .env file with the following tokens:
+    * GITHUB_TOKEN=your_github_token_with_repo_access
+    * HUGGING_FACE_TOKEN=your_hugging_face_token
+
 ---
 
 ## Module 1: Raw Data Crawling

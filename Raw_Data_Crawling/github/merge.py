@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import urllib.request
 import json
 from tqdm import tqdm
@@ -32,23 +33,25 @@ def merge_alldata(Year='2023', Month='1', index=0, total=0):
     
     global outdated
     YM = Year+'_'+Month
+    BASE_DIR = Path(__file__).resolve().parent
+
     #File paths for inputs
-    CVEinfo_name = 'results/' + YM + '.jsonl'
-    patch_name = 'crawl_result_new/' + YM + '_patch.jsonl'
-    patcherr_name = 'crawl_result/' + YM + '_patch_error.txt'
-    rawcode_name = 'rawcode_result/' + YM + '_rawcode.jsonl'
+    CVEinfo_name = str(BASE_DIR / 'results' / f'{YM}.jsonl')
+    patch_name = str(BASE_DIR / 'crawl_result_new' / f'{YM}_patch.jsonl')
+    patcherr_name = str(BASE_DIR / 'crawl_result' / f'{YM}_patch_error.txt')
+    rawcode_name = str(BASE_DIR / 'rawcode_result' / f'{YM}_rawcode.jsonl')
 
     #Directories for output
-    mergefile_language = 'merge_result_new/language/merge_'
-    mergefile_project = 'merge_result_new/project/merge_'
-    mergefile_project_big = 'merge_result_new/project_big/merge_'
-    mergefile_time = 'merge_result_new/time/merge_'
+    mergefile_language = str(BASE_DIR / 'merge_result_new' / 'language' / 'merge_')
+    mergefile_project = str(BASE_DIR / 'merge_result_new' / 'project' / 'merge_')
+    mergefile_project_big = str(BASE_DIR / 'merge_result_new' / 'project_big' / 'merge_')
+    mergefile_time = str(BASE_DIR / 'merge_result_new' / 'time' / 'merge_')
 
     #Ensure output directories exist
-    os.makedirs('merge_result_new/language', exist_ok=True)
-    os.makedirs('merge_result_new/project', exist_ok=True)
-    os.makedirs('merge_result_new/project_big', exist_ok=True)
-    os.makedirs('merge_result_new/time', exist_ok=True)
+    os.makedirs(BASE_DIR / 'merge_result_new' / 'language', exist_ok=True)
+    os.makedirs(BASE_DIR / 'merge_result_new' / 'project', exist_ok=True)
+    os.makedirs(BASE_DIR / 'merge_result_new' / 'project_big', exist_ok=True)
+    os.makedirs(BASE_DIR / 'merge_result_new' / 'time', exist_ok=True)
 
     #Skip if required input files do not exist
     if not os.path.exists(CVEinfo_name) or patch_name is None or rawcode_name is None:
@@ -59,12 +62,12 @@ def merge_alldata(Year='2023', Month='1', index=0, total=0):
     with open(CVEinfo_name, "r", encoding="utf-8") as rf:
         for line in rf:
             CVEinfo.append(json.loads(line))
-    
+
     #Load patch information
     patches = []
     with open(patch_name, "r", encoding="utf-8") as f:
         patches = json.load(f)
-    
+
     #Load raw code information
     rawcode = []
     with open(rawcode_name, "r", encoding="utf-8") as rfc:
@@ -192,7 +195,6 @@ def merge_data(Years, Months):
             print(str(Year) + ' ' + str(Month) + ' ' + str(index) + ' ' + str(total))
     print('in total we merge '+str(index)+' commits')
     print('in total we merge '+str(total)+' rawcodes')
-    print(outdated)
 
 def main(Years=['2016'], Months=['8']):
     """
